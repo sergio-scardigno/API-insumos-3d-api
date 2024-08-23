@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ES6", // Compila a ECMAScript 6
+        "module": "commonjs", // Utiliza módulos CommonJS
+        "outDir": "./dist", // Directorio de salida para los archivos compilados
+        "rootDir": "./api", // Directorio raíz de tus archivos fuente
+        "strict": true, // Habilita todas las comprobaciones de tipo
+        "esModuleInterop": true, // Habilita la interoperabilidad de módulos ES
+        "skipLibCheck": true, // Omite la verificación de archivos de declaración de tipo
+        "forceConsistentCasingInFileNames": true // Fuerza mayúsculas y minúsculas coherentes en los nombres de archivo
+    },
+    "include": ["api/**/*.ts"], // Incluir todos los archivos TypeScript en el directorio api
+    "exclude": ["node_modules", "**/*.spec.ts"] // Excluir node_modules y archivos de prueba
+}
