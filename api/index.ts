@@ -30,8 +30,6 @@ const productoSchema = new mongoose.Schema({
 // Convertir el precio de cadena a número para comparaciones
 productoSchema.virtual('precio_num').get(function () {
     if (this.precio) {
-        // Asumiendo el formato del precio es algo como "$ 9.500,00"
-        // Necesitarás ajustar esta conversión según tu formato específico
         return parseFloat(
             this.precio.replace(/[^\d,.-]/g, '').replace(',', '.')
         );
@@ -41,12 +39,13 @@ productoSchema.virtual('precio_num').get(function () {
 
 const Producto = mongoose.model('Producto', productoSchema);
 
-// Ruta para obtener los 5 productos más baratos por URL y presentación
+// Ruta para obtener productos con filtros adicionales
 app.get('/precios', async (req, res) => {
-    const { producto_url, presentacion } = req.query;
+    const { producto_url, presentacion, marca, color, negocio } = req.query;
 
     try {
         const query: any = {};
+
         if (producto_url) {
             query.producto_url = producto_url;
         }
@@ -54,17 +53,33 @@ app.get('/precios', async (req, res) => {
             query.presentacion = presentacion;
         }
 
-        // Buscar los productos que coincidan con los filtros y ordenar por precio de manera ascendente
+        if (marca || color) {
+            const regexParts = [];
+            if (marca) {
+                regexParts.push(marca);
+            }
+            if (color) {
+                regexParts.push(color);
+            }
+            query.title = { $regex: regexParts.join('|'), $options: 'i' };
+        }
+
+        // Asegurarse de que negocio sea una cadena antes de crear la RegExp
+        if (typeof negocio === 'string') {
+            query.negocio = { $regex: new RegExp(negocio, 'i') };
+        }
+
         const productos = await Producto.find(query)
-            .sort({ precio_num: 1 }) // Ordenar por precio ascendente
-            .limit(5); // Limitar a los 5 productos más baratos
+            .sort({ precio_num: 1 })
+            .limit(20);
 
         if (productos.length > 0) {
-            res.json(productos); // Devolver los 5 productos más baratos
+            res.json(productos);
         } else {
             res.status(404).send('No se encontraron productos');
         }
     } catch (error) {
+        console.error('Error al obtener los productos:', error);
         res.status(500).send('Error al obtener los productos');
     }
 });
