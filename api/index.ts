@@ -41,16 +41,21 @@ const Producto = mongoose.model('Producto', productoSchema);
 
 // Ruta para obtener productos con filtros adicionales
 app.get('/precios', async (req, res) => {
-    const { producto_url, presentacion, marca, color, negocio } = req.query;
+    const { producto_url, presentacion, marca, color, negocio, search } =
+        req.query;
 
     try {
-        const query: any = {};
+        const match: any = {};
+
+        // Filtrar por las tiendas específicas
+        const tiendasEspecificas = ['3dcasabureu', 'i3dtienda', 'Printalot'];
+        match.negocio = { $in: tiendasEspecificas };
 
         if (producto_url) {
-            query.producto_url = producto_url;
+            match.producto_url = producto_url;
         }
         if (presentacion) {
-            query.presentacion = presentacion;
+            match.presentacion = presentacion;
         }
 
         if (marca || color) {
@@ -61,17 +66,32 @@ app.get('/precios', async (req, res) => {
             if (color) {
                 regexParts.push(color);
             }
-            query.title = { $regex: regexParts.join('|'), $options: 'i' };
+            match.title = { $regex: regexParts.join('|'), $options: 'i' };
         }
 
-        // Asegurarse de que negocio sea una cadena antes de crear la RegExp
-        if (typeof negocio === 'string') {
-            query.negocio = { $regex: new RegExp(negocio, 'i') };
+        // Añadir búsqueda estricta en el campo title si se proporciona el parámetro `search`
+        if (typeof search === 'string') {
+            match.title = { $regex: new RegExp(`\\b${search}\\b`, 'i') };
         }
 
-        const productos = await Producto.find(query)
-            .sort({ precio_num: 1 })
-            .limit(20);
+        // Agregación para obtener los 5 mejores precios por negocio
+        const productos = await Producto.aggregate([
+            { $match: match },
+            { $sort: { precio_num: 1 } }, // Ordenar por precio_num
+            {
+                $group: {
+                    _id: '$negocio',
+                    productos: { $push: '$$ROOT' },
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    negocio: '$_id',
+                    productos: { $slice: ['$productos', 5] }, // Limitar a los primeros 5
+                },
+            },
+        ]);
 
         if (productos.length > 0) {
             res.json(productos);
@@ -84,8 +104,8 @@ app.get('/precios', async (req, res) => {
     }
 });
 
-const port = process.env.PORT || 3000;
-
-app.listen(port, () => {
-    console.log(`Servidor ejecutándose en el puerto ${port}`);
+// Iniciar servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
 });
