@@ -80,9 +80,27 @@ app.get('/precios', async (req, res) => {
                 $match: {
                     ...match,
                     fecha: { $ne: null }, // Excluir documentos con fecha null
-                    precio_num: { $ne: null }, // Excluir documentos con precio_num null
                 },
             },
+            {
+                $addFields: {
+                    precio_num: {
+                        $convert: {
+                            input: {
+                                $replaceAll: {
+                                    input: { $toString: '$precio' }, // Convertir `precio` a string si no lo es
+                                    find: ',',
+                                    replacement: '.',
+                                },
+                            },
+                            to: 'double',
+                            onError: 0, // Valor por defecto en caso de error de conversión
+                            onNull: 0, // Valor por defecto si el campo es null
+                        },
+                    },
+                },
+            },
+            { $match: { precio_num: { $ne: 0 } } }, // Filtrar documentos con `precio_num` no nulo o inválido
             { $sort: { fecha: -1, precio_num: 1 } }, // Ordenar por fecha y luego por precio_num
             {
                 $group: {
