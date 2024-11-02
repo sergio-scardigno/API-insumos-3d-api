@@ -77,7 +77,7 @@ app.get('/precios', async (req, res) => {
         // Agregación para obtener los 5 mejores precios por negocio
         const productos = await Producto.aggregate([
             { $match: match },
-            { $sort: { precio_num: 1 } }, // Ordenar por precio_num
+            { $sort: { fecha: -1, precio_num: 1 } }, // Ordenar primero por fecha y luego por precio_num
             {
                 $group: {
                     _id: '$negocio',
