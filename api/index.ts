@@ -70,7 +70,7 @@ app.get('/precios', async (req, res) => {
         }
 
         const productos = await Producto.find(query)
-            .sort({ precio_num: 1 })
+            .sort({ fecha: -1, precio_num: 1 }) // Ordena por fecha descendente, luego por precio ascendente
             .limit(5);
 
         if (productos.length > 0) {
