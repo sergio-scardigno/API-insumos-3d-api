@@ -71,7 +71,7 @@ app.get('/precios', async (req, res) => {
 
         const productos = await Producto.find(query)
             .sort({ precio_num: 1 })
-            .limit(20);
+            .limit(5);
 
         if (productos.length > 0) {
             res.json(productos);
